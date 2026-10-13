@@ -8,13 +8,15 @@ import android.view.ViewGroup
 import android.widget.TextView
 import kotlin.random.Random
 
-class DieFragment : Fragment() {
+const val DIESIDE = "sidenumber"
 
-    val DIESIDE = "sidenumber"
+class DieFragment : Fragment() {
+    val CURRENT_ROLE_KEY = "current_roll"
 
     lateinit var dieTextView: TextView
 
     var dieSides: Int = 6
+    var currentRoll: Int = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -22,6 +24,10 @@ class DieFragment : Fragment() {
             it.getInt(DIESIDE).run {
                 dieSides = this
             }
+        }
+
+        savedInstanceState?.let {
+            currentRoll = it.getInt(CURRENT_ROLE_KEY)
         }
     }
 
@@ -37,13 +43,30 @@ class DieFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        throwDie()
-        view.setOnClickListener{
+
+        if (currentRoll == 0) {
             throwDie()
+        } else {
+            dieTextView.text = currentRoll.toString()
         }
     }
 
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+
+        outState.putInt(CURRENT_ROLE_KEY, currentRoll)
+    }
+
     fun throwDie() {
-        dieTextView.text = Random.nextInt(dieSides).toString()
+        currentRoll = Random.nextInt(dieSides) + 1
+        dieTextView.text = currentRoll.toString()
+    }
+
+    companion object {
+        fun newInstance(sides: Int) = DieFragment().apply {
+            arguments = Bundle().apply {
+                putInt(DIESIDE, sides)
+            }
+        }
     }
 }
