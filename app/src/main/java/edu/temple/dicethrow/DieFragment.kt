@@ -6,17 +6,19 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
+import androidx.lifecycle.ViewModelProvider
 import kotlin.random.Random
 
 const val DIESIDE = "sidenumber"
 
 class DieFragment : Fragment() {
-    val CURRENT_ROLE_KEY = "current_roll"
+    val dieViewModel: DieViewModel by lazy {
+        ViewModelProvider(this)[DieViewModel::class.java]
+    }
 
     lateinit var dieTextView: TextView
 
     var dieSides: Int = 6
-    var currentRoll: Int = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -24,10 +26,6 @@ class DieFragment : Fragment() {
             it.getInt(DIESIDE).run {
                 dieSides = this
             }
-        }
-
-        savedInstanceState?.let {
-            currentRoll = it.getInt(CURRENT_ROLE_KEY)
         }
     }
 
@@ -44,22 +42,19 @@ class DieFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        if (currentRoll == 0) {
-            throwDie()
-        } else {
-            dieTextView.text = currentRoll.toString()
+        dieViewModel.getCurrentRole().observe(viewLifecycleOwner) { rollValue ->
+            dieTextView.text = rollValue.toString()
+        }
+
+        view.setOnClickListener {
+            if (requireActivity() is DieRollInterface) {
+                (requireActivity() as DieRollInterface).rollDice()
+            }
         }
     }
 
-    override fun onSaveInstanceState(outState: Bundle) {
-        super.onSaveInstanceState(outState)
-
-        outState.putInt(CURRENT_ROLE_KEY, currentRoll)
-    }
-
     fun throwDie() {
-        currentRoll = Random.nextInt(dieSides) + 1
-        dieTextView.text = currentRoll.toString()
+        dieViewModel.setRoll(Random.nextInt(dieSides) + 1)
     }
 
     companion object {
@@ -68,5 +63,9 @@ class DieFragment : Fragment() {
                 putInt(DIESIDE, sides)
             }
         }
+    }
+
+    interface DieRollInterface {
+        fun rollDice()
     }
 }
